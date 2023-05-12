@@ -69,7 +69,7 @@ outputs:
 steps: 
   gvcf2fasta_nonrefvcf-wf:
     run:  subworkflows/scatter/gvcf2fasta/gvcf2fasta_nonrefvcf-wf.cwl
-    when: $(inputs.sampleid and inputs.vcfsinput.vcf)
+    when: $(inputs.sampleid && inputs.vcfsinput.vcf)
     scatter: [sampleid, vcf]
     scatterMethod: dotproduct
     in:
@@ -82,7 +82,7 @@ steps:
 
   gvcf2fasta_splitvcf-imputation-wf:
     run: subworkflows/scatter/gvcf2fasta/gvcf2fasta_splitvcf-imputation-wf.cwl
-    when: $(inputs.sampleids and inputs.splitvcfdirs and inputs.chrs and inputs.refsdir and inputs.mapsdir and inputs.panelcallbed and inputs.panelnocallbed)
+    when: $(inputs.sampleids && inputs.splitvcfdirs && inputs.chrs && inputs.refsdir && inputs.mapsdir && inputs.panelcallbed && inputs.panelnocallbed)
     scatter: [sampleid, splitvcfdir]
     scatterMethod: dotproduct
     in:
@@ -100,7 +100,7 @@ steps:
 
   gvcf2fasta_splitvcf-wf:
     run: subworkflows/scatter/gvcf2fasta/gvcf2fasta_splitvcf-wf.cwl
-    when: $(inputs.sampleid and inputs.splitvcfdir)
+    when: $(inputs.sampleid && inputs.splitvcfdir)
     scatter: [sampleid, splitvcfdir]
     scatterMethod: dotproduct
     in:
@@ -112,7 +112,7 @@ steps:
     out: [fas]
   gvcf2fasta_splitvcftar-wf:
     run: subworkflows/scatter/gvcf2fasta/gvcf2fasta_splitvcftar-wf.cwl
-    when: $(inputs.sampleids and inputs.vcftars)
+    when: $(inputs.sampleids && inputs.vcftars)
     scatter: [sampleid, vcftar]
     scatterMethod: dotproduct
     in:
@@ -124,12 +124,14 @@ steps:
     out: [fas]
   getfiles:
     run: subworkflows/scatter/helpers/getfiles.cwl
+    when: $(inputs.vcfsinput && inputs.sampleid === null && inputs.sampleids === null)
     in:
       dir: vcfsinput
     out: [vcfs, samples]
   gvcf2fasta-wf:
     run: subworkflows/scatter/gvcf2fasta/gvcf2fasta-wf.cwl
     scatter: [sampleid, vcf]
+    when: $(getfiles.vcfs and getfiles.samples)
     scatterMethod: dotproduct
     in:
       sampleid: getfiles/samples
