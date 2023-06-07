@@ -4,12 +4,14 @@
 
 $namespaces:
   arv: "http://arvados.org/cwl#"
-cwlVersion: v1.1
+cwlVersion: v1.2
 class: Workflow
 label: Scatter to Convert various gVCF to FASTA
 requirements:
   SubworkflowFeatureRequirement: {}
   ScatterFeatureRequirement: {}
+  MultipleInputFeatureRequirement: {}
+  InlineJavascriptRequirement: {}
 hints:
   DockerRequirement:
     dockerPull: vcfutil
@@ -17,26 +19,24 @@ hints:
     outputTTL: 604800
   
 inputs:
-  vcfsinput:
-    - type: record
-      vcfsdir:
-        type: Directory
-        label: Input directory of VCFs
-    - type: record
-      vcfs:
-        type: File[]
-        label: Input VCFs in array of files 
-    - type: record
-      vcftars:
-        type: File[]
-        label: Input VCF tars
+  splitvcfdirs:
+    type: Directory[]?
+    label: Input directory of split gVCFs
+  vcfsdir:
+    type: Directory?
+    label: Input directory of VCFs
+  vcfs:
+    type: File[]?
+    label: Input VCFs in array of files 
+  vcftars:
+    type: File[]?
+    label: Input VCF tars
   genomebed:
-    type: File
+    type: File?
     label: Whole genome BED
   ref:
-    type: File
+    type: File?
     label: Reference FASTA
-  
   gqcutoff:
     type: int?
     label: GQ (Genotype Quality) cutoff for filtering
@@ -69,12 +69,16 @@ outputs:
 steps: 
   gvcf2fasta_nonrefvcf-wf:
     run:  subworkflows/scatter/gvcf2fasta/gvcf2fasta_nonrefvcf-wf.cwl
-    when: $(inputs.sampleid && inputs.vcfsinput.vcf)
+    when: $(inputs.sampleid && inputs.vcf)
     scatter: [sampleid, vcf]
     scatterMethod: dotproduct
     in:
-      sampleid: sampleids
-      vcf: vcfsinput
+      sampleid: 
+        source: sampleids
+        default: []
+      vcf: 
+        source: vcfs
+        default: []
       gqcutoff: gqcutoff
       genomebed: genomebed
       ref: ref
@@ -82,12 +86,16 @@ steps:
 
   gvcf2fasta_splitvcf-imputation-wf:
     run: subworkflows/scatter/gvcf2fasta/gvcf2fasta_splitvcf-imputation-wf.cwl
-    when: $(inputs.sampleids && inputs.splitvcfdirs && inputs.chrs && inputs.refsdir && inputs.mapsdir && inputs.panelcallbed && inputs.panelnocallbed)
+    when: $(inputs.sampleids !== null  && inputs.splitvcfdirs  !== null && inputs.chrs !== null && inputs.refsdir !== null && inputs.mapsdir !== null && inputs.panelcallbed  !== null && inputs.panelnocallbed !== null)
     scatter: [sampleid, splitvcfdir]
     scatterMethod: dotproduct
     in:
-      sampleid: sampleids
-      splitvcfdir: vcfsinput
+      sampleid: 
+        source: sampleids
+        default: []
+      splitvcfdir: 
+        source: splitvcfdirs
+        default: []
       gqcutoff: gqcutoff
       genomebed: genomebed
       ref: ref
@@ -100,43 +108,56 @@ steps:
 
   gvcf2fasta_splitvcf-wf:
     run: subworkflows/scatter/gvcf2fasta/gvcf2fasta_splitvcf-wf.cwl
-    when: $(inputs.sampleid && inputs.splitvcfdir)
+    when: $(inputs.sampleid !== null && inputs.splitvcfdir !== null && inputs.chrs == null)
     scatter: [sampleid, splitvcfdir]
     scatterMethod: dotproduct
     in:
-      sampleid: sampleids
-      splitvcfdir: vcfsinput
+      sampleid: 
+        source: sampleids
+        default: []
+      splitvcfdir: 
+        source: splitvcfdirs
+        default: []
       gqcutoff: gqcutoff
       genomebed: genomebed
       ref: ref
     out: [fas]
   gvcf2fasta_splitvcftar-wf:
     run: subworkflows/scatter/gvcf2fasta/gvcf2fasta_splitvcftar-wf.cwl
-    when: $(inputs.sampleids && inputs.vcftars)
+    when: $(inputs.sampleids !== null  && inputs.vcftars !== null )
     scatter: [sampleid, vcftar]
     scatterMethod: dotproduct
     in:
-      sampleid: sampleids
-      vcftar: vcfsinput
+      sampleid: 
+        source: sampleids
+        default: []
+      vcftar: 
+        source: vcftars
+        default: []
       gqcutoff: gqcutoff
       genomebed: genomebed
       ref: ref
     out: [fas]
   getfiles:
     run: subworkflows/scatter/helpers/getfiles.cwl
-    when: $(inputs.vcfsinput && inputs.sampleid === null && inputs.sampleids === null)
+    when: $(inputs.vcfsdir !== null) #  && inputs.sampleid === null && inputs.sampleids === null
     in:
-      dir: vcfsinput
+      dir: vcfsdir
     out: [vcfs, samples]
   gvcf2fasta-wf:
     run: subworkflows/scatter/gvcf2fasta/gvcf2fasta-wf.cwl
     scatter: [sampleid, vcf]
-    when: $(getfiles.vcfs and getfiles.samples)
+    when: $(inputs.vcfsdir !== null)
     scatterMethod: dotproduct
     in:
-      sampleid: getfiles/samples
-      vcf: getfiles/vcfs
+      sampleid: 
+        source: getfiles/samples
+        default: []
+      vcf: 
+        source: getfiles/vcfs
+        default: []
       genomebed: genomebed
       ref: ref
+      gqcutoff: gqcutoff
     out: [fas]
 

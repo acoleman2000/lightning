@@ -48,7 +48,6 @@ steps:
 
   bcftools-consensus:
     run: ../helpers/bcftools-consensus.cwl
-    scatter: haplotype
     in:
       sampleid: sampleid
       vcf: untar-concat-get_bed_varonlyvcf/varonlyvcf
