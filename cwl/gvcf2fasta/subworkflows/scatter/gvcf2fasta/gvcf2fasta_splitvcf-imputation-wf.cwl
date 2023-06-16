@@ -13,9 +13,6 @@ requirements:
 hints:
   DockerRequirement:
     dockerPull: vcfutil
-  arv:UsePreemptible:
-    usePreemptible: true
-
 inputs:
   sampleid:
     type: string

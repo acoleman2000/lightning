@@ -17,15 +17,21 @@ hints:
     outputTTL: 604800
 
 inputs:
-  vcfsdir:
-    type: Directory
-    label: Input directory of VCFs
+  vcfs:
+    type: File[]
+    label: Input files of VCFs
+  sampleids:
+    type: string[]
+    label: Sample IDs
   genomebed:
     type: File
     label: Whole genome BED
   ref:
     type: File
     label: Reference FASTA
+  gqcutoff:
+    type: int
+    label: GQ (Genotype Quality) cutoff for filtering
 
 outputs:
   fas:
@@ -38,18 +44,14 @@ outputs:
     outputSource: gvcf2fasta-wf/fas
 
 steps:
-  getfiles:
-    run: helpers/getfiles.cwl
-    in:
-      dir: vcfsdir
-    out: [vcfs, samples]
   gvcf2fasta-wf:
     run: gvcf2fasta/gvcf2fasta-wf.cwl
     scatter: [sampleid, vcf]
     scatterMethod: dotproduct
     in:
-      sampleid: getfiles/samples
-      vcf: getfiles/vcfs
+      sampleid: sampleids
+      vcf: vcfs
       genomebed: genomebed
       ref: ref
+      gqcutoff: gqcutoff
     out: [fas]

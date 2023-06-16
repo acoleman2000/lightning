@@ -31,7 +31,7 @@ inputs:
     label: Script to untar and concatenate vcf tar ball
     default:
       class: File
-      location: src/concat-get_bed_varonlyvcf.sh
+      location: ../../../src/concat-get_bed_varonlyvcf.sh
 outputs:
   nocallbed:
     type: File

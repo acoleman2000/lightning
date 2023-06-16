@@ -29,7 +29,7 @@ inputs:
     label: Script to run bcftools consensus
     default:
       class: File
-      location: src/bcftools-consensus.sh
+      location: ../../../src/bcftools-consensus.sh
 outputs:
   fas:
     type: File[]

@@ -2,12 +2,11 @@
 #
 # SPDX-License-Identifier: AGPL-3.0
 
-FROM arvados/jobs
-MAINTAINER Jiayong Li <jli@curii.com>
+FROM python:3.9-buster
 
 USER root
 
-RUN apt-get update -q
+RUN apt-get update 
 
 RUN apt-get install -qy build-essential wget cmake zlib1g-dev \
     libbz2-dev liblzma-dev libncurses5-dev libncursesw5-dev git vcftools
@@ -63,4 +62,4 @@ WORKDIR /
 
 # Installing gvcf_regions
 
-RUN git clone https://github.com/lijiayong/gvcf_regions
+RUN git clone https://github.com/acoleman2000/gvcf_regions

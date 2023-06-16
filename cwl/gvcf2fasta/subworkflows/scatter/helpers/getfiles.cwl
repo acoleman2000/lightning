@@ -16,22 +16,16 @@ outputs:
   vcfs:
     type: File[]
     label: Output VCFs
-  samples:
-    type: string[]
-    label: Sample names of VCFs
 requirements:
   InlineJavascriptRequirement: {}
 expression: |
   ${
     var vcfs = [];
-    var samples = [];
     for (var i = 0; i < inputs.dir.listing.length; i++) {
       var file = inputs.dir.listing[i];
       if (file.nameext == ".gz") {
         vcfs.push(file);
-        var sample = file.basename.split(".").slice(0, -2).join(".");
-        samples.push(sample);
       }
     }
-    return {"vcfs": vcfs, "samples": samples};
+    return {"vcfs": vcfs};
   }
